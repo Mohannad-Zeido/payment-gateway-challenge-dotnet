@@ -5,7 +5,7 @@ namespace PaymentGateway.Domain.Models;
 public record ProcessedPayment
 {
     public required Guid Id { get; init; }
-    public required int CardNumberLastFourDigits { get; init; }
+    public required string CardNumberLastFourDigits { get; init; }
     public required int ExpiryMonth { get; init; }
     public required int ExpiryYear { get; init; }
     public required Currency Currency { get; init; }
