@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
+using PaymentGateway.Domain.Enums;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
-using PaymentGateway.Application.Enums;
-using PaymentGateway.Application.Models;
+using PaymentGateway.Domain;
+using PaymentGateway.Domain.Models;
+using PaymentGateway.Infrastructure;
 
 namespace PaymentGateway.Api.Controllers;
 
@@ -13,10 +15,12 @@ namespace PaymentGateway.Api.Controllers;
 public class PaymentsController : Controller
 {
     private readonly PaymentsRepository _paymentsRepository;
+    private readonly IPaymentService _paymentService;
 
-    public PaymentsController(PaymentsRepository paymentsRepository)
+    public PaymentsController(PaymentsRepository paymentsRepository, IPaymentService paymentService)
     {
         _paymentsRepository = paymentsRepository;
+        _paymentService = paymentService;
     }
 
     [HttpGet("{id:guid}")]
@@ -41,11 +45,21 @@ public class PaymentsController : Controller
 
         var processPaymentRequest = request.ToProcessPaymentRequest();
 
-        
-        
-        var payment = _paymentsRepository.Get(Guid.NewGuid());
+       var response =  await _paymentService.ProcessPaymentAsync(processPaymentRequest);
 
-        return new OkObjectResult(payment);
+        
+        var id = _paymentsRepository.Add(processPaymentRequest, response);
+
+        return new OkObjectResult(new PostPaymentResponse
+        {
+            Amount = processPaymentRequest.Amount,
+            Currency = processPaymentRequest.Currency.ToString(),
+            Id = id,
+            Status = response.PaymentStatus.ToString(),
+            ExpiryMonth = processPaymentRequest.ExpiryMonth,
+            ExpiryYear = processPaymentRequest.ExpiryYear,
+            CardNumberLastFour = CardNumberMasker.GetLastFourDigits(processPaymentRequest.CardNumber)
+        });
     }
 }
 

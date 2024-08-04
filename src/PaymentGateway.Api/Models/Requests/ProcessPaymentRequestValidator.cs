@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 
-using PaymentGateway.Application.Enums;
+using PaymentGateway.Domain.Enums;
+
 
 namespace PaymentGateway.Api.Models.Requests;
 
