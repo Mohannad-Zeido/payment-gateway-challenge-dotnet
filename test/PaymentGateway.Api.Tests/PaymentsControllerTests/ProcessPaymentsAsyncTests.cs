@@ -10,7 +10,13 @@ using PaymentGateway.Api.Controllers;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
-using PaymentGateway.Application.Enums;
+using PaymentGateway.Domain.Enums;
+using PaymentGateway.Domain.Models;
+
+using WireMock.RequestBuilders;
+using WireMock.ResponseBuilders;
+using WireMock.Server;
+
 
 namespace PaymentGateway.Api.Tests.PaymentsControllerTests;
 
@@ -27,10 +33,36 @@ public class ProcessPaymentsAsyncTests
             ExpiryYear = _random.Next(DateTime.Now.Year, DateTime.MaxValue.Year),
             ExpiryMonth = _random.Next(1, 12),
             Amount = _random.Next(1, 10000),
-            CardNumber = _random.NextInt64(10000000000000, 9999999999999999),
+            CardNumber = 12345678909876,//_random.NextInt64(10000000000000, 9999999999999999),
             Currency = "GBP",
             Cvv = _random.Next(100, 9999)
         };
+        
+        // test case showing first digit is a 0 would be nice
+
+        var authorizationCode = Guid.NewGuid();
+        
+        var server = WireMockServer.Start(8080);
+
+        server.Given(
+            Request.Create().WithPath("/payments")
+                .WithBodyAsJson(new
+                {
+                    
+                    card_number = hummus.CardNumber.ToString(),
+                    expiry_date = $"{hummus.ExpiryMonth}/{hummus.ExpiryYear}",
+                    currency = hummus.Currency,
+                    amount = hummus.Amount,
+                    cvv = hummus.Cvv.ToString()
+                }))
+            .RespondWith(
+                Response.Create()
+                    .WithStatusCode((200))
+                    .WithBodyAsJson(new {
+                        
+                        authorized = true,
+                        authorization_code = authorizationCode.ToString()
+                    }));
         
         var paymentsRepository = new PaymentsRepository();
         
@@ -50,22 +82,24 @@ public class ProcessPaymentsAsyncTests
         var response = await client.SendAsync(request);
 
         response.Should().NotBeNull();
-        var paymentResponse = response.As<PostPaymentResponse>();
+        var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(await response.Content.ReadAsStringAsync());
         paymentResponse.Should().NotBeNull();
 
-        var storedPayment = paymentsRepository.Get(Guid.NewGuid());
+        var storedPayment = paymentsRepository.Get(paymentResponse!.Id);
 
-        var lastFourDigits = (int) hummus.CardNumber % 10000;
+        var lastFourDigits = hummus.CardNumber.Value % 10000;
 
-        storedPayment.Should().BeEquivalentTo(new PostPaymentResponse
+        storedPayment.Should().BeEquivalentTo(new ProcessedPayment
         {
-            Status = PaymentStatus.Authorized,
-            Amount = hummus.Amount,
-            Currency = hummus.Currency,
-            ExpiryMonth = hummus.ExpiryMonth,
-            ExpiryYear = hummus.ExpiryYear,
-            Id = Guid.NewGuid(),
-            CardNumberLastFour = lastFourDigits,
+            PaymentStatus = Enum.Parse<PaymentStatus>(paymentResponse.Status),
+            Amount = hummus.Amount.Value,
+            Currency = Enum.Parse<Currency>(hummus.Currency),
+            ExpiryMonth = hummus.ExpiryMonth.Value,
+            ExpiryYear = hummus.ExpiryYear.Value,
+            Id = paymentResponse.Id,
+            Cvv = hummus.Cvv.Value,
+            CardNumberLastFourDigits = (int) lastFourDigits,
+            AuthorisationCode = authorizationCode.ToString()
         });
     }
 
