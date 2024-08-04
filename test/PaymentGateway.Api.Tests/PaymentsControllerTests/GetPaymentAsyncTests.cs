@@ -6,10 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Api.Controllers;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
+using PaymentGateway.Application.Enums;
 
-namespace PaymentGateway.Api.Tests;
+namespace PaymentGateway.Api.Tests.PaymentsControllerTests;
 
-public class PaymentsControllerTests
+public class GetPaymentAsyncTests
 {
     private readonly Random _random = new();
     
@@ -24,7 +25,8 @@ public class PaymentsControllerTests
             ExpiryMonth = _random.Next(1, 12),
             Amount = _random.Next(1, 10000),
             CardNumberLastFour = _random.Next(1111, 9999),
-            Currency = "GBP"
+            Currency = "GBP",
+            Status = PaymentStatus.Authorized
         };
 
         var paymentsRepository = new PaymentsRepository();
