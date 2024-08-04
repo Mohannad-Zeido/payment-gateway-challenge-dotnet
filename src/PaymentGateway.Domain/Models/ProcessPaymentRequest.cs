@@ -1,6 +1,7 @@
-﻿using PaymentGateway.Application.Enums;
+﻿
+using PaymentGateway.Domain.Enums;
 
-namespace PaymentGateway.Application.Models;
+namespace PaymentGateway.Domain.Models;
 
 public record ProcessPaymentRequest
 {

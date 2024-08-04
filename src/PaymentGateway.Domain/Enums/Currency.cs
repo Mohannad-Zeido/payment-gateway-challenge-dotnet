@@ -1,6 +1,4 @@
-﻿
-
-namespace PaymentGateway.Application.Enums;
+﻿namespace PaymentGateway.Domain.Enums;
 
 public enum Currency
 {
