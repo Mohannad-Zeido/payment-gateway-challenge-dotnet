@@ -49,7 +49,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
     }
     
     [Fact]
-    public async Task GivenPaymentRequestIsValid_ThenResponseShouldBeAuthorisedPayment_AndPaymentSaved()
+    public async Task GivenPaymentRequestIsValid_ThenResponseShouldBeSuccessWithAuthorisedPayment_AndPaymentSaved()
     {
         // Arrange
         var payment = new PostPaymentRequest
@@ -118,7 +118,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
     }
     
     [Fact]
-    public async Task GivenPaymentRequestIsValid_WhenAcquirerBankDeclinesPayment_ThenResponseShouldBeDeclinedPayment_AndPaymentSaved()
+    public async Task GivenPaymentRequestIsValid_WhenAcquirerBankDeclinesPayment_ThenResponseShouldBeSuccessWithDeclinedPayment_AndPaymentSaved()
     {
         // Arrange
         var payment = new PostPaymentRequest
