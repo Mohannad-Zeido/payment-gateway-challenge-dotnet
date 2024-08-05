@@ -2,6 +2,8 @@ using AutoFixture;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using NSubstitute;
 
 using PaymentGateway.Domain.Enums;
@@ -49,7 +51,7 @@ public class SimulatedBankPaymentServiceTests
             ExpiryYear = fixture.Create<DateTime>().Year,
         };
         
-        var sut = new SimulatedBankPaymentService(mockClient);
+        var sut = new SimulatedBankPaymentService(mockClient, NullLogger<SimulatedBankPaymentService>.Instance);
 
         var result = await sut.ProcessPaymentAsync(request);
         

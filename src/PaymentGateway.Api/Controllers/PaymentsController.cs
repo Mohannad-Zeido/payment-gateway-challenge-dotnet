@@ -16,20 +16,25 @@ public class PaymentsController : Controller
 {
     private readonly PaymentsRepository _paymentsRepository;
     private readonly IPaymentService _paymentService;
+    private readonly ILogger<PaymentsController> _logger;
 
-    public PaymentsController(PaymentsRepository paymentsRepository, IPaymentService paymentService)
+    public PaymentsController(PaymentsRepository paymentsRepository, IPaymentService paymentService, ILogger<PaymentsController> logger)
     {
         _paymentsRepository = paymentsRepository;
         _paymentService = paymentService;
+        _logger = logger;
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
     {
+        _logger.LogInformation("Retrieving payment for Id: {payment_id}", id);
+        
         var payment = await _paymentsRepository.GetAsync(id);
 
         if (payment is null)
         {
+            _logger.LogInformation("No payment found for Id: {payment_id}", id);
             return NotFound();
         }
         
@@ -49,23 +54,26 @@ public class PaymentsController : Controller
     public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(
         [FromBody] PostPaymentRequest request)
     {
+        _logger.LogInformation("Process payment request received");
+        
         var requestValidator = new ProcessPaymentRequestValidator();
+        
         var validationResult = await requestValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
             var error = validationResult.Errors.First();
+            var validationErrorMessageString = $"{error.PropertyName}: {error.ErrorMessage}";
+            _logger.LogInformation("Validation Error: '{validation_error_message}'", validationErrorMessageString);
             return BadRequest(new RejectedPostPaymentResponse
             {
                 ErrorMessage = $"{error.PropertyName}: {error.ErrorMessage}", 
                 Status = PaymentStatus.Rejected,
             });
-
         }
         
         var processPaymentRequest = request.ToProcessPaymentRequest();
-
-       var response =  await _paymentService.ProcessPaymentAsync(processPaymentRequest);
-
+        
+        var response =  await _paymentService.ProcessPaymentAsync(processPaymentRequest);
         
         var id = await _paymentsRepository.AddAsync(processPaymentRequest, response);
 
