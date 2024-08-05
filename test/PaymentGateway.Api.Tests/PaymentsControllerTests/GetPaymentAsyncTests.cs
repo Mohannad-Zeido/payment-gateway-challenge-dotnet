@@ -26,14 +26,17 @@ public class GetPaymentAsyncTests
             Amount = _random.Next(1, 10000),
             CardNumber = _random.NextInt64(10000000000000, 9999999999999999),
             Currency = Currency.GBP,
+            Cvv = _random.Next(100, 9999).ToString()
         };
 
-        var paymentsRepository = new PaymentsRepository();
-        var id = paymentsRepository.Add(payment, new ProcessPaymentResponse
+        var processedPayment = new ProcessPaymentResponse
         {
             PaymentStatus = PaymentStatus.Authorized,
             AuthorizationCode = "testing123"
-        });
+        };
+
+        var paymentsRepository = new PaymentsRepository();
+        var id = paymentsRepository.Add(payment, processedPayment);
 
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
         var client = webApplicationFactory.WithWebHostBuilder(builder =>

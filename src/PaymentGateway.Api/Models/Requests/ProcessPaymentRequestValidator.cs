@@ -9,6 +9,8 @@ public class ProcessPaymentRequestValidator : AbstractValidator<PostPaymentReque
 {
     public ProcessPaymentRequestValidator()
     {
+        RuleLevelCascadeMode = CascadeMode.Stop;
+        
         RuleFor(ppr => ppr.CardNumber)
             .NotEmpty()
             .Must(cardNumber => BeValidCardNumber(cardNumber!.Value));
@@ -28,11 +30,11 @@ public class ProcessPaymentRequestValidator : AbstractValidator<PostPaymentReque
 
         RuleFor(card => card.Amount)
             .Must(amount => amount > 0).WithMessage("Amount must be greater than zero.");
-        
-        RuleFor(ppr => ppr.Cvv)
-            .NotEmpty()
-            .Must(cvv => BeValidCvv(cvv!.Value));
 
+        RuleFor(ppr => ppr.Cvv)
+            .NotEmpty().WithMessage("CVV is required.")
+            .Length(3, 4).WithMessage("CVV must be 3-4 characters long.")
+            .Must(x => int.TryParse(x, out _)).WithMessage("CVV must only contain numeric characters.");
     }
     
     private static bool BeValidCardNumber(long number)

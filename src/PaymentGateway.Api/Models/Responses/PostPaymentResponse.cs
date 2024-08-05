@@ -9,7 +9,7 @@ public class PostPaymentResponse
     [JsonPropertyName("id")]
     public required Guid Id { get; init; }
     [JsonPropertyName("status")]
-    public required string Status { get; init; }
+    public required PaymentStatus Status { get; init; }
     [JsonPropertyName("card_number_last_four")]
     public required string CardNumberLastFour { get; init; }
     [JsonPropertyName("expiry_month")]
@@ -17,7 +17,7 @@ public class PostPaymentResponse
     [JsonPropertyName("expiry_year")]
     public required int ExpiryYear { get; init; }
     [JsonPropertyName("currency")]
-    public required string Currency { get; init; }
+    public required Currency Currency { get; init; }
     [JsonPropertyName("amount")]
     public required int Amount { get; init; }
 }

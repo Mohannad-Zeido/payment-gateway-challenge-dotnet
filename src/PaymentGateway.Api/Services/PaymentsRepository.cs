@@ -13,7 +13,6 @@ public class PaymentsRepository
         {
             Amount = payment.Amount,
             Currency = payment.Currency,
-            Cvv = payment.Cvv,
             Id = Guid.NewGuid(),
             CardNumberLastFourDigits = CardNumberMasker.GetLastFourDigits(payment.CardNumber),
             ExpiryMonth = payment.ExpiryMonth,

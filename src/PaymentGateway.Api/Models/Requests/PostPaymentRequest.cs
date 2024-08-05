@@ -7,5 +7,5 @@ public record PostPaymentRequest
     public int? ExpiryYear { get; init; }
     public string? Currency { get; init; }
     public int? Amount { get; init; }
-    public int? Cvv { get; init; }
+    public string? Cvv { get; init; }
 }

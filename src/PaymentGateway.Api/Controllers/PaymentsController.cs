@@ -41,8 +41,18 @@ public class PaymentsController : Controller
         [FromBody] PostPaymentRequest request)
     {
         var requestValidator = new ProcessPaymentRequestValidator();
-        var result = await requestValidator.ValidateAsync(request);
+        var validationResult = await requestValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var error = validationResult.Errors.Single();
+            return BadRequest(new RejectedPostPaymentResponse
+            {
+                ErrorMessage = $"{error.PropertyName}: {error.ErrorMessage}", 
+                Status = PaymentStatus.Rejected,
+            });
 
+        }
+        
         var processPaymentRequest = request.ToProcessPaymentRequest();
 
        var response =  await _paymentService.ProcessPaymentAsync(processPaymentRequest);
@@ -53,9 +63,9 @@ public class PaymentsController : Controller
         return new OkObjectResult(new PostPaymentResponse
         {
             Amount = processPaymentRequest.Amount,
-            Currency = processPaymentRequest.Currency.ToString(),
+            Currency = processPaymentRequest.Currency,
             Id = id,
-            Status = response.PaymentStatus.ToString(),
+            Status = response.PaymentStatus,
             ExpiryMonth = processPaymentRequest.ExpiryMonth,
             ExpiryYear = processPaymentRequest.ExpiryYear,
             CardNumberLastFour = CardNumberMasker.GetLastFourDigits(processPaymentRequest.CardNumber)
@@ -75,7 +85,7 @@ public static class PostPaymentRequestExtensions{
             Currency = Enum.Parse<Currency>(postPaymentRequest.Currency!),
             CardNumber = postPaymentRequest.CardNumber!.Value,
             Amount = postPaymentRequest.Amount!.Value,
-            Cvv = postPaymentRequest.Cvv!.Value,
+            Cvv = postPaymentRequest.Cvv!,
         };
     }
 }
