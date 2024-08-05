@@ -100,9 +100,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         paymentResponse.Should().NotBeNull();
 
         var storedPayment = _paymentsRepository.Get(paymentResponse!.Id);
-
-        //TODO change the cardMasking logic
-        var lastFourDigits = payment.CardNumber.Value % 10000;
+        
 
         storedPayment.Should().BeEquivalentTo(new ProcessedPayment
         {
@@ -112,7 +110,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
             ExpiryMonth = payment.ExpiryMonth.Value,
             ExpiryYear = payment.ExpiryYear.Value,
             Id = paymentResponse.Id,
-            CardNumberLastFourDigits = lastFourDigits.ToString(),
+            CardNumberLastFourDigits = GetCardLastFourDigits(payment.CardNumber.Value),
             AuthorisationCode = expectedAuthorisationCode.ToString()
         });
     }
@@ -168,9 +166,6 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
 
         var storedPayment = _paymentsRepository.Get(paymentResponse!.Id);
 
-        //TODO change the cardMasking logic
-        var lastFourDigits = payment.CardNumber.Value % 10000;
-
         paymentResponse.Should().BeEquivalentTo(new PostPaymentResponse
         {
             Status = PaymentStatus.Declined,
@@ -179,7 +174,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
             ExpiryMonth = payment.ExpiryMonth.Value,
             ExpiryYear = payment.ExpiryYear.Value,
             Id = paymentResponse.Id,
-            CardNumberLastFourDigits = lastFourDigits.ToString()
+            CardNumberLastFourDigits = GetCardLastFourDigits(payment.CardNumber.Value),
         });
 
         storedPayment.Should().BeEquivalentTo(new ProcessedPayment
@@ -190,7 +185,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
             ExpiryMonth = payment.ExpiryMonth.Value,
             ExpiryYear = payment.ExpiryYear.Value,
             Id = paymentResponse.Id,
-            CardNumberLastFourDigits = lastFourDigits.ToString(),
+            CardNumberLastFourDigits = GetCardLastFourDigits(payment.CardNumber.Value),
             AuthorisationCode = string.Empty
         });
     }
@@ -341,5 +336,11 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         paymentResponse.Should().NotBeNull();
         
         paymentResponse!.CardNumberLastFourDigits.Should().BeEquivalentTo("0876");
+    }
+    
+    private static string GetCardLastFourDigits(long cardNumber)
+    {
+        var cardNumberString = cardNumber.ToString();
+        return cardNumberString.Substring(cardNumberString.Length - 4);
     }
 }
