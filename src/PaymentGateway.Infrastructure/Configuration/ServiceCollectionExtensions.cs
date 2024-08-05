@@ -12,7 +12,6 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddSimulatedBank(
         this IServiceCollection services, IConfiguration configuration)
     {
-        var hummus = configuration.GetSection("SimulatedBankOptions").Get<SimulatedBankOptions>();
         services.Configure<SimulatedBankOptions>(configuration.GetSection(nameof(SimulatedBankOptions)));
         services.AddScoped<IPaymentService, SimulatedBankPaymentService>();
         services.AddScoped<ISimulatedBankClient, SimulatedBankClient>();
