@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 
+using PaymentGateway.Api.Middleware;
 using PaymentGateway.Api.Services;
 using PaymentGateway.Infrastructure.Configuration;
 
@@ -34,5 +35,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.Run();

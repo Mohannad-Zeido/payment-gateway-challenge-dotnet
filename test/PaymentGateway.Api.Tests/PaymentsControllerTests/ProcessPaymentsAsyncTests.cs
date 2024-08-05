@@ -79,7 +79,6 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                 Response.Create()
                     .WithStatusCode((200))
                     .WithBodyAsJson(new {
-                        
                         authorized = true,
                         authorization_code = expectedAuthorisationCode.ToString()
                     }));
@@ -92,9 +91,8 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         };
 
         var response = await _sut.SendAsync(request);
-
         response.EnsureSuccessStatusCode();
-
+        
         response.Should().NotBeNull();
         var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
         paymentResponse.Should().NotBeNull();
@@ -188,6 +186,60 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
             Id = paymentResponse.Id,
             CardNumberLastFourDigits = GetCardLastFourDigits(payment.CardNumber),
             AuthorisationCode = string.Empty
+        });
+    }
+    
+    [Fact]
+    public async Task GivenPaymentRequestIsValid_WhenExceptionIsThrown_ThenResponseShouldBeInternalServerError_WithExpectedMessage()
+    {
+        // Arrange
+        var payment = new PostPaymentRequest
+        {
+            ExpiryYear = _random.Next(DateTime.Now.Year, DateTime.MaxValue.Year),
+            ExpiryMonth = _random.Next(1, 12),
+            Amount = _random.Next(1, 10000),
+            CardNumber = _random.NextInt64(10000000000000, 999999999999999999).ToString(),
+            Currency = "GBP",
+            Cvv = _random.Next(100, 9999).ToString()
+        };
+
+        var expectedAuthorisationCode = Guid.NewGuid();
+        
+        _mockServer.Reset();
+        _mockServer.Given(
+            Request.Create().WithPath("/payments")
+                .WithBodyAsJson(new
+                {
+                    
+                    card_number = payment.CardNumber,
+                    expiry_date = $"{payment.ExpiryMonth}/{payment.ExpiryYear}",
+                    currency = payment.Currency,
+                    amount = payment.Amount,
+                    cvv = payment.Cvv
+                }))
+            .RespondWith(
+                Response.Create()
+                    .WithStatusCode((200))
+                    .WithBodyAsJson(new {
+                    }));
+        
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post, 
+            RequestUri = new Uri("/api/Payments/", UriKind.RelativeOrAbsolute),
+            Content = new StringContent(JsonSerializer.Serialize(payment, _jsonSerializerOptions), Encoding.UTF8, "application/json")
+        };
+
+        var response = await _sut.SendAsync(request);
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        
+        response.Should().NotBeNull();
+        var paymentResponse = JsonSerializer.Deserialize<ErrorDetailsResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        paymentResponse.Should().NotBeNull();
+
+        paymentResponse.Should().BeEquivalentTo(new ErrorDetailsResponse
+        {
+            Message = "Internal Server Error Please Raise a supportTicket.", StatusCode = 500,
         });
     }
     

@@ -19,14 +19,14 @@ namespace PaymentGateway.Infrastructure.SimulatedBank
             {
                 Amount = request.Amount,
                 Currency = request.Currency.ToString(),
-                Cvv = request.Cvv.ToString(),
+                Cvv = request.Cvv,
                 CardNumber = request.CardNumber.ToString(),
                 ExpiryDate = $"{request.ExpiryMonth}/{request.ExpiryYear}",
             });
 
             if (response.Authorized is null)
             {
-                throw new InvalidOperationException("The payment status should be set");
+                throw new InvalidOperationException("Authorised status should be set");
             }
 
             return new ProcessPaymentResponse
