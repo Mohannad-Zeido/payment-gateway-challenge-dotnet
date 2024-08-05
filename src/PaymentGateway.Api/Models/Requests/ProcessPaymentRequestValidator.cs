@@ -12,16 +12,17 @@ public class ProcessPaymentRequestValidator : AbstractValidator<PostPaymentReque
         RuleLevelCascadeMode = CascadeMode.Stop;
         
         RuleFor(ppr => ppr.CardNumber)
-            .NotEmpty()
-            .Must(cardNumber => BeValidCardNumber(cardNumber!.Value));
+            .NotEmpty().WithMessage("CardNumber is required.")
+            .Must(cardNumber => BeValidCardNumber(cardNumber!.Value)).WithMessage("Value must be between 14-19 characters long");
         
         RuleFor(ppr => ppr.ExpiryMonth)
-            .NotEmpty()
-            .InclusiveBetween(1, 12);
+            .NotEmpty().WithMessage("ExpiryMonth is required.")
+            .InclusiveBetween(1, 12).WithMessage("Value must be between 1-12.");
         
         RuleFor(card => card.ExpiryYear)
-            .NotEmpty()
-            .Must((card, expiryYear) => BeAValidExpiryDate(card.ExpiryMonth!.Value, expiryYear!.Value));
+            .NotEmpty().WithMessage("ExpiryYear is required.")
+            .Must(expiryYear => BeAValidYear(expiryYear!.Value)).WithMessage("Value must be in the future")
+            .Must((card, expiryYear) => BeAValidExpiryDate(card.ExpiryMonth!.Value, expiryYear!.Value)).WithMessage("Expiry month and year combination must be in the future");
         
         RuleFor(card => card.Currency)
             .NotEmpty().WithMessage("Currency is required.")
@@ -29,24 +30,24 @@ public class ProcessPaymentRequestValidator : AbstractValidator<PostPaymentReque
             .Must(BeAValidCurrency).WithMessage("Currency must be a valid ISO currency code.");
 
         RuleFor(card => card.Amount)
+            .NotEmpty().WithMessage("Amount is required")
             .Must(amount => amount > 0).WithMessage("Amount must be greater than zero.");
 
         RuleFor(ppr => ppr.Cvv)
             .NotEmpty().WithMessage("CVV is required.")
             .Length(3, 4).WithMessage("CVV must be 3-4 characters long.")
-            .Must(x => int.TryParse(x, out _)).WithMessage("CVV must only contain numeric characters.");
+            .Must(x => int.TryParse(x, out _)).WithMessage("Must only contain numeric characters.");
     }
     
     private static bool BeValidCardNumber(long number)
     {
         var length =  number.ToString().Length;
-        return length is >= 14 and <= 16;
+        return length is >= 14 and <= 19;
     }
     
-    private static bool BeValidCvv(int number)
+    private static bool BeAValidYear(int year)
     {
-        var length =  number.ToString().Length;
-        return length is >= 3 and <= 4;
+        return year >= DateTime.Now.Year;
     }
     
     private static bool BeAValidExpiryDate(int month, int year)

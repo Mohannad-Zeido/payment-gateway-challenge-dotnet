@@ -46,8 +46,6 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                 builder.ConfigureServices(services => ((ServiceCollection)services)
                     .AddSingleton(_paymentsRepository)))
             .CreateClient();
-        
-        
     }
     
     [Fact]
