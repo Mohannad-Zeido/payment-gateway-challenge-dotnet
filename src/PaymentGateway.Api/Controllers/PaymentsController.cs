@@ -44,7 +44,7 @@ public class PaymentsController : Controller
         var validationResult = await requestValidator.ValidateAsync(request);
         if (!validationResult.IsValid)
         {
-            var error = validationResult.Errors.Single();
+            var error = validationResult.Errors.First();
             return BadRequest(new RejectedPostPaymentResponse
             {
                 ErrorMessage = $"{error.PropertyName}: {error.ErrorMessage}", 
@@ -83,7 +83,7 @@ public static class PostPaymentRequestExtensions{
             ExpiryYear = postPaymentRequest.ExpiryYear!.Value,
             ExpiryMonth = postPaymentRequest.ExpiryMonth!.Value,
             Currency = Enum.Parse<Currency>(postPaymentRequest.Currency!),
-            CardNumber = postPaymentRequest.CardNumber!.Value,
+            CardNumber = long.Parse(postPaymentRequest.CardNumber!),
             Amount = postPaymentRequest.Amount!.Value,
             Cvv = postPaymentRequest.Cvv!,
         };
