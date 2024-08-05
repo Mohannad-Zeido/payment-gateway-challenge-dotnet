@@ -25,7 +25,7 @@ public class GetPaymentAsyncTests
 
     
     [Fact]
-    public async Task RetrievesAPaymentSuccessfully()
+    public async Task GivenExistingAuthorisedPaymentId_ThenPreviouslyMadePaymentReturned()
     {
         // Arrange
         var payment = new ProcessPaymentRequest
@@ -61,9 +61,47 @@ public class GetPaymentAsyncTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(paymentResponse);
     }
+    
+    [Fact]
+    public async Task GivenExistingDeclinedPaymentId_ThenPreviouslyMadePaymentReturned()
+    {
+        // Arrange
+        var payment = new ProcessPaymentRequest
+        {
+            ExpiryYear = _random.Next(2023, 2030),
+            ExpiryMonth = _random.Next(1, 12),
+            Amount = _random.Next(1, 10000),
+            CardNumber = _random.NextInt64(10000000000000, 9999999999999999),
+            Currency = Currency.GBP,
+            Cvv = _random.Next(100, 9999).ToString()
+        };
+
+        var processedPayment = new ProcessPaymentResponse
+        {
+            PaymentStatus = PaymentStatus.Declined,
+            AuthorizationCode = ""
+        };
+
+        var paymentsRepository = new PaymentsRepository();
+        var id = await paymentsRepository.AddAsync(payment, processedPayment);
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.WithWebHostBuilder(builder =>
+                builder.ConfigureServices(services => ((ServiceCollection)services)
+                    .AddSingleton(paymentsRepository)))
+            .CreateClient();
+
+        // Act
+        var response = await client.GetAsync($"/api/Payments/{id}");
+        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(_jsonSerializerOptions);
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(paymentResponse);
+    }
 
     [Fact]
-    public async Task Returns404IfPaymentNotFound()
+    public async Task GivenNonExistingPaymentId_ThenNotFoundStatusCode()
     {
         // Arrange
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();

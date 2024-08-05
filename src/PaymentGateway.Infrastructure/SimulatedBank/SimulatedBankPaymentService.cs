@@ -14,6 +14,7 @@ namespace PaymentGateway.Infrastructure.SimulatedBank
         }
         public async Task<ProcessPaymentResponse> ProcessPaymentAsync(ProcessPaymentRequest request)
         {
+            var expiryMonthString = request.ExpiryMonth < 10 ? "0" + request.ExpiryMonth : request.ExpiryMonth.ToString();
 
             var response = await _simulatedBankClient.PostPaymentAsync(new PaymentsRequest
             {
@@ -21,7 +22,7 @@ namespace PaymentGateway.Infrastructure.SimulatedBank
                 Currency = request.Currency.ToString(),
                 Cvv = request.Cvv,
                 CardNumber = request.CardNumber.ToString(),
-                ExpiryDate = $"{request.ExpiryMonth}/{request.ExpiryYear}",
+                ExpiryDate = $"{expiryMonthString}/{request.ExpiryYear}",
             });
 
             if (response.Authorized is null)

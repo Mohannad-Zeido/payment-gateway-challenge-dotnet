@@ -346,7 +346,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         
         paymentResponse!.CardNumberLastFourDigits.Should().BeEquivalentTo("0876");
     }
-    
+
     private static string GetCardLastFourDigits(string cardNumber)
     {
         return cardNumber.Substring(cardNumber.Length - 4);
