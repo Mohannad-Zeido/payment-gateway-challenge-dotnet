@@ -347,16 +347,6 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         paymentResponse!.CardNumberLastFourDigits.Should().BeEquivalentTo("0876");
     }
 
-    private static string GetCardLastFourDigits(string cardNumber)
-    {
-        return cardNumber.Substring(cardNumber.Length - 4);
-    }
-
-    private static string ToClientExpiryMonth(int expiryMonth)
-    {
-        return expiryMonth < 10 ? ("0" + expiryMonth) : expiryMonth.ToString();
-    }
-
     #region Request Validation Tests
     
     [Theory]
@@ -647,4 +637,14 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         });
     }
     #endregion
+    
+    private static string GetCardLastFourDigits(string cardNumber)
+    {
+        return cardNumber.Substring(cardNumber.Length - 4);
+    }
+
+    private static string ToClientExpiryMonth(int expiryMonth)
+    {
+        return expiryMonth < 10 ? ("0" + expiryMonth) : expiryMonth.ToString();
+    }
 }
