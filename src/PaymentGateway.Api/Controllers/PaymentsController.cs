@@ -76,7 +76,9 @@ public class PaymentsController : Controller
         var response =  await _paymentService.ProcessPaymentAsync(processPaymentRequest);
         
         var id = await _paymentsRepository.AddAsync(processPaymentRequest, response);
-
+        
+        _logger.LogInformation("Status for PaymentId: {payment_id} is: {payment_status}", id, response.PaymentStatus);
+        
         return new OkObjectResult(new PostPaymentResponse
         {
             Amount = processPaymentRequest.Amount,
@@ -89,7 +91,6 @@ public class PaymentsController : Controller
         });
     }
 }
-
 
 public static class PostPaymentRequestExtensions{
 
