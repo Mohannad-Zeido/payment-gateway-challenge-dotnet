@@ -4,6 +4,6 @@ namespace PaymentGateway.Api.Tests;
 
 public class WireMockServerSetup
 {
-    public readonly WireMockServer MockServer = WireMockServer.Start(8080);
+    public readonly WireMockServer MockServer = WireMockServer.Start(5432);
     
 }

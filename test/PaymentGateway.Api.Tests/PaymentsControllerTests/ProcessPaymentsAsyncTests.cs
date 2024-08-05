@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using FluentAssertions;
 
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using PaymentGateway.Api.Controllers;
@@ -43,7 +44,14 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
         _sut = webApplicationFactory.WithWebHostBuilder(builder =>
-                builder.ConfigureServices(services => ((ServiceCollection)services)
+                builder.ConfigureAppConfiguration((context, config) =>
+                    {
+                        config.AddConfiguration(new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.test.json"))
+                            .Build());
+                    })
+                    .ConfigureServices(services => ((ServiceCollection)services)
                     .AddSingleton(_paymentsRepository)))
             .CreateClient();
     }
