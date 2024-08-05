@@ -75,7 +75,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                     expiry_date = $"{payment.ExpiryMonth}/{payment.ExpiryYear}",
                     currency = payment.Currency,
                     amount = payment.Amount,
-                    cvv = payment.Cvv.ToString()
+                    cvv = payment.Cvv
                 }))
             .RespondWith(
                 Response.Create()
@@ -116,6 +116,84 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
             Id = paymentResponse.Id,
             CardNumberLastFourDigits = lastFourDigits.ToString(),
             AuthorisationCode = expectedAuthorisationCode.ToString()
+        });
+    }
+    
+    [Fact]
+    public async Task GivenPaymentRequestIsValid_WhenAcquirerBankDeclinesPayment_ThenResponseShouldBeDeclinedPayment_AndPaymentSaved()
+    {
+        // Arrange
+        var payment = new PostPaymentRequest
+        {
+            ExpiryYear = _random.Next(DateTime.Now.Year, DateTime.MaxValue.Year),
+            ExpiryMonth = _random.Next(1, 12),
+            Amount = _random.Next(1, 10000),
+            CardNumber = _random.NextInt64(10000000000000, 9999999999999999),
+            Currency = "GBP",
+            Cvv = _random.Next(100, 9999).ToString()
+        };
+        
+        _mockServer.Given(
+            Request.Create().WithPath("/payments")
+                .WithBodyAsJson(new
+                {
+                    
+                    card_number = payment.CardNumber.ToString(),
+                    expiry_date = $"{payment.ExpiryMonth}/{payment.ExpiryYear}",
+                    currency = payment.Currency,
+                    amount = payment.Amount,
+                    cvv = payment.Cvv
+                }))
+            .RespondWith(
+                Response.Create()
+                    .WithStatusCode((200))
+                    .WithBodyAsJson(new {
+                        
+                        authorized = false,
+                        authorization_code = ""
+                    }));
+        
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post, 
+            RequestUri = new Uri("/api/Payments/", UriKind.RelativeOrAbsolute),
+            Content = new StringContent(JsonSerializer.Serialize(payment, _jsonSerializerOptions), Encoding.UTF8, "application/json")
+        };
+
+        var response = await _sut.SendAsync(request);
+
+        response.EnsureSuccessStatusCode();
+
+        response.Should().NotBeNull();
+        var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        paymentResponse.Should().NotBeNull();
+
+        var storedPayment = _paymentsRepository.Get(paymentResponse!.Id);
+
+        //TODO change the cardMasking logic
+        var lastFourDigits = payment.CardNumber.Value % 10000;
+
+        paymentResponse.Should().BeEquivalentTo(new PostPaymentResponse
+        {
+            Status = PaymentStatus.Declined,
+            Amount = payment.Amount.Value,
+            Currency = Enum.Parse<Currency>(payment.Currency),
+            ExpiryMonth = payment.ExpiryMonth.Value,
+            ExpiryYear = payment.ExpiryYear.Value,
+            Id = paymentResponse.Id,
+            CardNumberLastFourDigits = lastFourDigits.ToString()
+        });
+
+        storedPayment.Should().BeEquivalentTo(new ProcessedPayment
+        {
+            PaymentStatus = PaymentStatus.Declined,
+            Amount = payment.Amount.Value,
+            Currency = Enum.Parse<Currency>(payment.Currency),
+            ExpiryMonth = payment.ExpiryMonth.Value,
+            ExpiryYear = payment.ExpiryYear.Value,
+            Id = paymentResponse.Id,
+            CardNumberLastFourDigits = lastFourDigits.ToString(),
+            AuthorisationCode = string.Empty
         });
     }
     
@@ -264,6 +342,6 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions );
         paymentResponse.Should().NotBeNull();
         
-        paymentResponse!.CardNumberLastFour.Should().BeEquivalentTo("0876");
+        paymentResponse!.CardNumberLastFourDigits.Should().BeEquivalentTo("0876");
     }
 }

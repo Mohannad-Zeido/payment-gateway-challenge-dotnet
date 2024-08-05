@@ -68,7 +68,7 @@ public class PaymentsController : Controller
             Status = response.PaymentStatus,
             ExpiryMonth = processPaymentRequest.ExpiryMonth,
             ExpiryYear = processPaymentRequest.ExpiryYear,
-            CardNumberLastFour = CardNumberMasker.GetLastFourDigits(processPaymentRequest.CardNumber)
+            CardNumberLastFourDigits = CardNumberMasker.GetLastFourDigits(processPaymentRequest.CardNumber)
         });
     }
 }

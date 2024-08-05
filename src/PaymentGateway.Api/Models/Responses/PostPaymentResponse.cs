@@ -11,7 +11,7 @@ public class PostPaymentResponse
     [JsonPropertyName("status")]
     public required PaymentStatus Status { get; init; }
     [JsonPropertyName("card_number_last_four")]
-    public required string CardNumberLastFour { get; init; }
+    public required string CardNumberLastFourDigits { get; init; }
     [JsonPropertyName("expiry_month")]
     public required int ExpiryMonth { get; init; }
     [JsonPropertyName("expiry_year")]
