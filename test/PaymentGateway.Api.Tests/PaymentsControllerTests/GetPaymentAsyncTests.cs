@@ -55,7 +55,7 @@ public class GetPaymentAsyncTests
 
         // Act
         var response = await client.GetAsync($"/api/Payments/{id}");
-        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(_jsonSerializerOptions);
+        var paymentResponse = await response.Content.ReadFromJsonAsync<GetPaymentResponse>(_jsonSerializerOptions);
         
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -93,7 +93,7 @@ public class GetPaymentAsyncTests
 
         // Act
         var response = await client.GetAsync($"/api/Payments/{id}");
-        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(_jsonSerializerOptions);
+        var paymentResponse = await response.Content.ReadFromJsonAsync<GetPaymentResponse>(_jsonSerializerOptions);
         
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

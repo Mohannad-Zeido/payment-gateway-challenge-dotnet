@@ -26,7 +26,7 @@ public class PaymentsController : Controller
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
+    public async Task<ActionResult<GetPaymentResponse?>> GetPaymentAsync(Guid id)
     {
         _logger.LogInformation("Retrieving payment for Id: {payment_id}", id);
         
@@ -38,7 +38,7 @@ public class PaymentsController : Controller
             return NotFound();
         }
         
-        return new OkObjectResult(new PostPaymentResponse
+        return new OkObjectResult(new GetPaymentResponse
         {
             Amount = payment.Amount,
             Currency = payment.Currency,
@@ -46,7 +46,7 @@ public class PaymentsController : Controller
             Status = payment.PaymentStatus,
             ExpiryMonth = payment.ExpiryMonth,
             ExpiryYear = payment.ExpiryYear,
-            CardNumberLastFourDigits = payment.CardNumberLastFourDigits
+            CardNumberLastFour = payment.CardNumberLastFourDigits
         });
     }
 

@@ -52,7 +52,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
     public async Task GivenPaymentRequestIsValid_ThenResponseShouldBeSuccessWithAuthorisedPayment_AndPaymentSaved()
     {
         // Arrange
-        var payment = new PostPaymentRequest
+        var paymentRequest = new PostPaymentRequest
         {
             ExpiryYear = _random.Next(DateTime.Now.Year, DateTime.MaxValue.Year),
             ExpiryMonth = _random.Next(1, 12),
@@ -70,11 +70,11 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                 .WithBodyAsJson(new
                 {
                     
-                    card_number = payment.CardNumber,
-                    expiry_date = $"{payment.ExpiryMonth}/{payment.ExpiryYear}",
-                    currency = payment.Currency,
-                    amount = payment.Amount,
-                    cvv = payment.Cvv
+                    card_number = paymentRequest.CardNumber,
+                    expiry_date = $"{ToClientExpiryMonth(paymentRequest.ExpiryMonth.Value)}/{paymentRequest.ExpiryYear}",
+                    currency = paymentRequest.Currency,
+                    amount = paymentRequest.Amount,
+                    cvv = paymentRequest.Cvv
                 }))
             .RespondWith(
                 Response.Create()
@@ -88,7 +88,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         {
             Method = HttpMethod.Post, 
             RequestUri = new Uri("/api/Payments/", UriKind.RelativeOrAbsolute),
-            Content = new StringContent(JsonSerializer.Serialize(payment, _jsonSerializerOptions), Encoding.UTF8, "application/json")
+            Content = new StringContent(JsonSerializer.Serialize(paymentRequest, _jsonSerializerOptions), Encoding.UTF8, "application/json")
         };
 
         var response = await _sut.SendAsync(request);
@@ -104,12 +104,12 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         storedPayment.Should().BeEquivalentTo(new ProcessedPayment
         {
             PaymentStatus = PaymentStatus.Authorized,
-            Amount = payment.Amount.Value,
-            Currency = Enum.Parse<Currency>(payment.Currency),
-            ExpiryMonth = payment.ExpiryMonth.Value,
-            ExpiryYear = payment.ExpiryYear.Value,
+            Amount = paymentRequest.Amount.Value,
+            Currency = Enum.Parse<Currency>(paymentRequest.Currency),
+            ExpiryMonth = paymentRequest.ExpiryMonth.Value,
+            ExpiryYear = paymentRequest.ExpiryYear.Value,
             Id = paymentResponse.Id,
-            CardNumberLastFourDigits = GetCardLastFourDigits(payment.CardNumber),
+            CardNumberLastFourDigits = GetCardLastFourDigits(paymentRequest.CardNumber),
             AuthorisationCode = expectedAuthorisationCode.ToString()
         });
     }
@@ -118,7 +118,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
     public async Task GivenPaymentRequestIsValid_WhenAcquirerBankDeclinesPayment_ThenResponseShouldBeSuccessWithDeclinedPayment_AndPaymentSaved()
     {
         // Arrange
-        var payment = new PostPaymentRequest
+        var paymentRequest = new PostPaymentRequest
         {
             ExpiryYear = _random.Next(DateTime.Now.Year, DateTime.MaxValue.Year),
             ExpiryMonth = _random.Next(1, 12),
@@ -134,11 +134,11 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                 .WithBodyAsJson(new
                 {
                     
-                    card_number = payment.CardNumber,
-                    expiry_date = $"{payment.ExpiryMonth}/{payment.ExpiryYear}",
-                    currency = payment.Currency,
-                    amount = payment.Amount,
-                    cvv = payment.Cvv
+                    card_number = paymentRequest.CardNumber,
+                    expiry_date = $"{ToClientExpiryMonth(paymentRequest.ExpiryMonth.Value)}/{paymentRequest.ExpiryYear}",
+                    currency = paymentRequest.Currency,
+                    amount = paymentRequest.Amount,
+                    cvv = paymentRequest.Cvv
                 }))
             .RespondWith(
                 Response.Create()
@@ -153,7 +153,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         {
             Method = HttpMethod.Post, 
             RequestUri = new Uri("/api/Payments/", UriKind.RelativeOrAbsolute),
-            Content = new StringContent(JsonSerializer.Serialize(payment, _jsonSerializerOptions), Encoding.UTF8, "application/json")
+            Content = new StringContent(JsonSerializer.Serialize(paymentRequest, _jsonSerializerOptions), Encoding.UTF8, "application/json")
         };
 
         var response = await _sut.SendAsync(request);
@@ -169,23 +169,23 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         paymentResponse.Should().BeEquivalentTo(new PostPaymentResponse
         {
             Status = PaymentStatus.Declined,
-            Amount = payment.Amount.Value,
-            Currency = Enum.Parse<Currency>(payment.Currency),
-            ExpiryMonth = payment.ExpiryMonth.Value,
-            ExpiryYear = payment.ExpiryYear.Value,
+            Amount = paymentRequest.Amount.Value,
+            Currency = Enum.Parse<Currency>(paymentRequest.Currency),
+            ExpiryMonth = paymentRequest.ExpiryMonth.Value,
+            ExpiryYear = paymentRequest.ExpiryYear.Value,
             Id = paymentResponse.Id,
-            CardNumberLastFourDigits = GetCardLastFourDigits(payment.CardNumber),
+            CardNumberLastFourDigits = GetCardLastFourDigits(paymentRequest.CardNumber),
         });
 
         storedPayment.Should().BeEquivalentTo(new ProcessedPayment
         {
             PaymentStatus = PaymentStatus.Declined,
-            Amount = payment.Amount.Value,
-            Currency = Enum.Parse<Currency>(payment.Currency),
-            ExpiryMonth = payment.ExpiryMonth.Value,
-            ExpiryYear = payment.ExpiryYear.Value,
+            Amount = paymentRequest.Amount.Value,
+            Currency = Enum.Parse<Currency>(paymentRequest.Currency),
+            ExpiryMonth = paymentRequest.ExpiryMonth.Value,
+            ExpiryYear = paymentRequest.ExpiryYear.Value,
             Id = paymentResponse.Id,
-            CardNumberLastFourDigits = GetCardLastFourDigits(payment.CardNumber),
+            CardNumberLastFourDigits = GetCardLastFourDigits(paymentRequest.CardNumber),
             AuthorisationCode = string.Empty
         });
     }
@@ -194,7 +194,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
     public async Task GivenPaymentRequestIsValid_WhenExceptionIsThrown_ThenResponseShouldBeInternalServerError_WithExpectedMessage()
     {
         // Arrange
-        var payment = new PostPaymentRequest
+        var paymentRequest = new PostPaymentRequest
         {
             ExpiryYear = _random.Next(DateTime.Now.Year, DateTime.MaxValue.Year),
             ExpiryMonth = _random.Next(1, 12),
@@ -212,11 +212,11 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                 .WithBodyAsJson(new
                 {
                     
-                    card_number = payment.CardNumber,
-                    expiry_date = $"{payment.ExpiryMonth}/{payment.ExpiryYear}",
-                    currency = payment.Currency,
-                    amount = payment.Amount,
-                    cvv = payment.Cvv
+                    card_number = paymentRequest.CardNumber,
+                    expiry_date = $"{ToClientExpiryMonth(paymentRequest.ExpiryMonth.Value)}/{paymentRequest.ExpiryYear}",
+                    currency = paymentRequest.Currency,
+                    amount = paymentRequest.Amount,
+                    cvv = paymentRequest.Cvv
                 }))
             .RespondWith(
                 Response.Create()
@@ -228,7 +228,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         {
             Method = HttpMethod.Post, 
             RequestUri = new Uri("/api/Payments/", UriKind.RelativeOrAbsolute),
-            Content = new StringContent(JsonSerializer.Serialize(payment, _jsonSerializerOptions), Encoding.UTF8, "application/json")
+            Content = new StringContent(JsonSerializer.Serialize(paymentRequest, _jsonSerializerOptions), Encoding.UTF8, "application/json")
         };
 
         var response = await _sut.SendAsync(request);
@@ -264,7 +264,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                 .WithBodyAsJson(new
                 {
                     card_number = paymentRequest.CardNumber,
-                    expiry_date = $"{paymentRequest.ExpiryMonth}/{paymentRequest.ExpiryYear}",
+                    expiry_date = $"{ToClientExpiryMonth(paymentRequest.ExpiryMonth.Value)}/{paymentRequest.ExpiryYear}",
                     currency = paymentRequest.Currency,
                     amount = paymentRequest.Amount,
                     cvv = expectedCvv
@@ -314,7 +314,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
                 .WithBodyAsJson(new
                 {
                     card_number = paymentRequest.CardNumber,
-                    expiry_date = $"{paymentRequest.ExpiryMonth}/{paymentRequest.ExpiryYear}",
+                    expiry_date = $"{ToClientExpiryMonth(paymentRequest.ExpiryMonth.Value)}/{paymentRequest.ExpiryYear}",
                     currency = paymentRequest.Currency,
                     amount = paymentRequest.Amount,
                     cvv = paymentRequest.Cvv
@@ -350,6 +350,11 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
     private static string GetCardLastFourDigits(string cardNumber)
     {
         return cardNumber.Substring(cardNumber.Length - 4);
+    }
+
+    private static string ToClientExpiryMonth(int expiryMonth)
+    {
+        return expiryMonth < 10 ? ("0" + expiryMonth) : expiryMonth.ToString();
     }
 
     #region Request Validation Tests

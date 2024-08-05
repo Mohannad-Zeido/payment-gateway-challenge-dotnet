@@ -9,6 +9,7 @@ using NSubstitute;
 using PaymentGateway.Domain.Enums;
 using PaymentGateway.Domain.Models;
 using PaymentGateway.Infrastructure.SimulatedBank;
+using PaymentGateway.Infrastructure.SimulatedBank.Client;
 using PaymentGateway.Infrastructure.SimulatedBank.Models;
 
 namespace PaymentGateway.Infrastructure.Tests;
