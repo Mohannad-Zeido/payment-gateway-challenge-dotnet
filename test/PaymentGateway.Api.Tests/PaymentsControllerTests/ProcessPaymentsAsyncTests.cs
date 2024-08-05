@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,9 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Api.Controllers;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
-using PaymentGateway.Api.Services;
 using PaymentGateway.Domain.Enums;
 using PaymentGateway.Domain.Models;
+using PaymentGateway.Infrastructure.Persistence;
 
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
@@ -92,12 +93,12 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
 
         var response = await _sut.SendAsync(request);
         response.EnsureSuccessStatusCode();
-        
         response.Should().NotBeNull();
-        var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        
+        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(_jsonSerializerOptions);
         paymentResponse.Should().NotBeNull();
 
-        var storedPayment = _paymentsRepository.Get(paymentResponse!.Id);
+        var storedPayment = await _paymentsRepository.GetAsync(paymentResponse!.Id);
         
 
         storedPayment.Should().BeEquivalentTo(new ProcessedPayment
@@ -160,10 +161,10 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         response.EnsureSuccessStatusCode();
 
         response.Should().NotBeNull();
-        var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(_jsonSerializerOptions);
         paymentResponse.Should().NotBeNull();
 
-        var storedPayment = _paymentsRepository.Get(paymentResponse!.Id);
+        var storedPayment = await _paymentsRepository.GetAsync(paymentResponse!.Id);
 
         paymentResponse.Should().BeEquivalentTo(new PostPaymentResponse
         {
@@ -234,7 +235,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         
         response.Should().NotBeNull();
-        var paymentResponse = JsonSerializer.Deserialize<ErrorDetailsResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var paymentResponse = await response.Content.ReadFromJsonAsync<ErrorDetailsResponse>(_jsonSerializerOptions);
         paymentResponse.Should().NotBeNull();
 
         paymentResponse.Should().BeEquivalentTo(new ErrorDetailsResponse
@@ -340,7 +341,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         // Assert
         response.EnsureSuccessStatusCode();
         
-        var paymentResponse = JsonSerializer.Deserialize<PostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions );
+        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(_jsonSerializerOptions);
         paymentResponse.Should().NotBeNull();
         
         paymentResponse!.CardNumberLastFourDigits.Should().BeEquivalentTo("0876");
@@ -388,7 +389,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         
-        var rejectedPostPaymentResponse = JsonSerializer.Deserialize<RejectedPostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var rejectedPostPaymentResponse = await response.Content.ReadFromJsonAsync<RejectedPostPaymentResponse>(_jsonSerializerOptions);
         
         rejectedPostPaymentResponse.Should().NotBeNull();
 
@@ -427,7 +428,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var rejectedPostPaymentResponse = JsonSerializer.Deserialize<RejectedPostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var rejectedPostPaymentResponse = await response.Content.ReadFromJsonAsync<RejectedPostPaymentResponse>(_jsonSerializerOptions);
         
         rejectedPostPaymentResponse.Should().NotBeNull();
 
@@ -467,7 +468,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var rejectedPostPaymentResponse = JsonSerializer.Deserialize<RejectedPostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var rejectedPostPaymentResponse = await response.Content.ReadFromJsonAsync<RejectedPostPaymentResponse>(_jsonSerializerOptions);
         
         rejectedPostPaymentResponse.Should().NotBeNull();
 
@@ -503,7 +504,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var rejectedPostPaymentResponse = JsonSerializer.Deserialize<RejectedPostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var rejectedPostPaymentResponse = await response.Content.ReadFromJsonAsync<RejectedPostPaymentResponse>(_jsonSerializerOptions);
         
         rejectedPostPaymentResponse.Should().NotBeNull();
 
@@ -547,7 +548,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         
-        var rejectedPostPaymentResponse = JsonSerializer.Deserialize<RejectedPostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var rejectedPostPaymentResponse = await response.Content.ReadFromJsonAsync<RejectedPostPaymentResponse>(_jsonSerializerOptions);
         
         rejectedPostPaymentResponse.Should().NotBeNull();
 
@@ -586,7 +587,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var rejectedPostPaymentResponse = JsonSerializer.Deserialize<RejectedPostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var rejectedPostPaymentResponse = await response.Content.ReadFromJsonAsync<RejectedPostPaymentResponse>(_jsonSerializerOptions);
         
         rejectedPostPaymentResponse.Should().NotBeNull();
 
@@ -630,7 +631,7 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         
-        var rejectedPostPaymentResponse = JsonSerializer.Deserialize<RejectedPostPaymentResponse>(await response.Content.ReadAsStringAsync(), _jsonSerializerOptions);
+        var rejectedPostPaymentResponse = await response.Content.ReadFromJsonAsync<RejectedPostPaymentResponse>(_jsonSerializerOptions);
         
         rejectedPostPaymentResponse.Should().NotBeNull();
 
@@ -640,6 +641,5 @@ public class ProcessPaymentsAsyncTests : IClassFixture<WireMockServerSetup>
             ErrorMessage = expectedErrorMessage,
         });
     }
-
     #endregion
 }

@@ -3,10 +3,10 @@
 using PaymentGateway.Domain.Enums;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
-using PaymentGateway.Api.Services;
 using PaymentGateway.Domain;
 using PaymentGateway.Domain.Models;
 using PaymentGateway.Infrastructure;
+using PaymentGateway.Infrastructure.Persistence;
 
 namespace PaymentGateway.Api.Controllers;
 
@@ -26,18 +26,27 @@ public class PaymentsController : Controller
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
     {
-        var payment = _paymentsRepository.Get(id);
+        var payment = await _paymentsRepository.GetAsync(id);
 
         if (payment is null)
         {
             return NotFound();
         }
-        await Task.Delay(1000);
-        return new OkObjectResult(payment);
+        
+        return new OkObjectResult(new PostPaymentResponse
+        {
+            Amount = payment.Amount,
+            Currency = payment.Currency,
+            Id = id,
+            Status = payment.PaymentStatus,
+            ExpiryMonth = payment.ExpiryMonth,
+            ExpiryYear = payment.ExpiryYear,
+            CardNumberLastFourDigits = payment.CardNumberLastFourDigits
+        });
     }
 
     [HttpPost]
-    public async Task<ActionResult<PostPaymentResponse>> ProcessPaymentAsync(
+    public async Task<ActionResult<PostPaymentResponse>> PostPaymentAsync(
         [FromBody] PostPaymentRequest request)
     {
         var requestValidator = new ProcessPaymentRequestValidator();
@@ -58,7 +67,7 @@ public class PaymentsController : Controller
        var response =  await _paymentService.ProcessPaymentAsync(processPaymentRequest);
 
         
-        var id = _paymentsRepository.Add(processPaymentRequest, response);
+        var id = await _paymentsRepository.AddAsync(processPaymentRequest, response);
 
         return new OkObjectResult(new PostPaymentResponse
         {

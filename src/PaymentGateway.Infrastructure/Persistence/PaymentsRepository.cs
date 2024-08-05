@@ -1,13 +1,13 @@
 ﻿using PaymentGateway.Domain;
 using PaymentGateway.Domain.Models;
 
-namespace PaymentGateway.Api.Services;
+namespace PaymentGateway.Infrastructure.Persistence;
 
 public class PaymentsRepository
 {
     private readonly List<ProcessedPayment> _payments = new();
     
-    public Guid Add(ProcessPaymentRequest payment, ProcessPaymentResponse paymentResult)
+    public Task<Guid> AddAsync(ProcessPaymentRequest payment, ProcessPaymentResponse paymentResult)
     {
         var paymentToStore = new ProcessedPayment
         {
@@ -23,11 +23,11 @@ public class PaymentsRepository
             
         _payments.Add(paymentToStore);
 
-        return paymentToStore.Id;
+        return Task.FromResult(paymentToStore.Id);
     }
 
-    public ProcessedPayment? Get(Guid id)
+    public Task<ProcessedPayment?> GetAsync(Guid id)
     {
-        return _payments.FirstOrDefault(p => p.Id == id);
+        return Task.FromResult(_payments.FirstOrDefault(p => p.Id == id));
     }
 }

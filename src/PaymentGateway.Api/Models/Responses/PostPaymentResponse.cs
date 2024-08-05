@@ -10,7 +10,7 @@ public class PostPaymentResponse
     public required Guid Id { get; init; }
     [JsonPropertyName("status")]
     public required PaymentStatus Status { get; init; }
-    [JsonPropertyName("card_number_last_four")]
+    [JsonPropertyName("card_number_last_four_digits")]
     public required string CardNumberLastFourDigits { get; init; }
     [JsonPropertyName("expiry_month")]
     public required int ExpiryMonth { get; init; }

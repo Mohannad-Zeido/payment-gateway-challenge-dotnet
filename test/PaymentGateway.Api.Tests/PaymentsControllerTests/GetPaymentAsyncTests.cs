@@ -1,19 +1,28 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 using PaymentGateway.Api.Controllers;
 using PaymentGateway.Api.Models.Responses;
-using PaymentGateway.Api.Services;
 using PaymentGateway.Domain.Enums;
 using PaymentGateway.Domain.Models;
+using PaymentGateway.Infrastructure.Persistence;
 
 namespace PaymentGateway.Api.Tests.PaymentsControllerTests;
 
 public class GetPaymentAsyncTests
 {
     private readonly Random _random = new();
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
+    {
+        Converters = { new JsonStringEnumConverter() }, 
+        WriteIndented = true
+    };
+
     
     [Fact]
     public async Task RetrievesAPaymentSuccessfully()
@@ -36,7 +45,7 @@ public class GetPaymentAsyncTests
         };
 
         var paymentsRepository = new PaymentsRepository();
-        var id = paymentsRepository.Add(payment, processedPayment);
+        var id = await paymentsRepository.AddAsync(payment, processedPayment);
 
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
         var client = webApplicationFactory.WithWebHostBuilder(builder =>
@@ -46,7 +55,7 @@ public class GetPaymentAsyncTests
 
         // Act
         var response = await client.GetAsync($"/api/Payments/{id}");
-        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+        var paymentResponse = await response.Content.ReadFromJsonAsync<PostPaymentResponse>(_jsonSerializerOptions);
         
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
